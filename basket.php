@@ -15,64 +15,83 @@ $operations = [
 
 $items = [];
 
+function clearScreen(): void {
+    system(PHP_OS_FAMILY === 'Windows' ? 'cls' : 'clear');
+}
 
-do {
-    system('clear');
-//    system('cls'); // windows
+function listDisplay(array $items): void {
+     if (count($items)) {
+        echo 'Ваш список покупок: ' . PHP_EOL;
+        echo implode("\n", $items) . "\n";
+    } else {
+        echo 'Ваш список покупок пуст.' . PHP_EOL;
+    }
+}
 
+function operationDisplay(array $items, array $operations): int {
+    clearScreen();
     do {
-        if (count($items)) {
-            echo 'Ваш список покупок: ' . PHP_EOL;
-            echo implode("\n", $items) . "\n";
-        } else {
-            echo 'Ваш список покупок пуст.' . PHP_EOL;
-        }
-
-
+        listDisplay($items);
         echo 'Выберите операцию для выполнения: ' . PHP_EOL;
-        // Проверить, есть ли товары в списке? Если нет, то не отображать пункт про удаление товаров
-        echo implode(PHP_EOL, $operations) . PHP_EOL . '> ';
-        $operationNumber = trim(fgets(STDIN));
+        $availableOperations = $operations;
+        if (!count($items)) {
+            unset($availableOperations[OPERATION_DELETE]);
+        }
+        echo implode(PHP_EOL, $availableOperations) . PHP_EOL . '> ';
+        $operationNumber = (int) trim(fgets(STDIN));
 
         if (!array_key_exists($operationNumber, $operations)) {
-            system('clear');
-
+            clearScreen();
             echo '!!! Неизвестный номер операции, повторите попытку.' . PHP_EOL;
         }
 
     } while (!array_key_exists($operationNumber, $operations));
 
+    return $operationNumber;
+}
+
+function operationAdd(array &$items): void {
+    echo "Введите название товара для добавления в список: \n> ";
+    $itemName = trim(fgets(STDIN));
+    $items[] = $itemName;
+}
+
+function operationDelete(array &$items): void {
+    listDisplay($items);
+    if (!count($items)) {
+        echo 'Нет товаров, доступных для удаления. Пожалуйста, введите номер другой операции.';
+    } else {
+        echo 'Введите название товара для удаления из списка:' . PHP_EOL . '> ';
+        $itemName = trim(fgets(STDIN));
+        while (($key = array_search($itemName, $items, true)) !== false) {
+            unset($items[$key]);
+        }
+    }
+}
+
+function operationPrint(array $items): void {
+    listDisplay($items);
+            echo 'Всего ' . count($items) . ' позиций. '. PHP_EOL;
+            echo 'Нажмите Enter для продолжения';
+            fgets(STDIN);
+}
+
+do {
+    $operationNumber = operationDisplay($items, $operations);
+
     echo 'Выбрана операция: '  . $operations[$operationNumber] . PHP_EOL;
 
     switch ($operationNumber) {
         case OPERATION_ADD:
-            echo "Введение название товара для добавления в список: \n> ";
-            $itemName = trim(fgets(STDIN));
-            $items[] = $itemName;
+            operationAdd($items);
             break;
 
         case OPERATION_DELETE:
-            // Проверить, есть ли товары в списке? Если нет, то сказать об этом и попросить ввести другую операцию
-            echo 'Текущий список покупок:' . PHP_EOL;
-            echo 'Список покупок: ' . PHP_EOL;
-            echo implode("\n", $items) . "\n";
-
-            echo 'Введение название товара для удаления из списка:' . PHP_EOL . '> ';
-            $itemName = trim(fgets(STDIN));
-
-            if (in_array($itemName, $items, true) !== false) {
-                while (($key = array_search($itemName, $items, true)) !== false) {
-                    unset($items[$key]);
-                }
-            }
+            operationDelete($items);
             break;
 
         case OPERATION_PRINT:
-            echo 'Ваш список покупок: ' . PHP_EOL;
-            echo implode(PHP_EOL, $items) . PHP_EOL;
-            echo 'Всего ' . count($items) . ' позиций. '. PHP_EOL;
-            echo 'Нажмите enter для продолжения';
-            fgets(STDIN);
+            operationPrint($items);
             break;
     }
 
