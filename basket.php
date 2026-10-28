@@ -83,8 +83,14 @@ function operationEdit(array &$items): void {
     }
     echo 'Введите название товара из списка для редактирования: ' . PHP_EOL . '> ';
     $nameOld = trim(fgets(STDIN));
-    $key = array_search($nameOld, array_column($items, 'name'), true);
-    if ($key === false) {
+    $key = null;
+    foreach ($items as $itemKey => $item) {
+        if ($item['name'] === $nameOld) {
+            $key = $itemKey;
+            break;
+        }
+    }
+    if ($key === null) {
         echo 'Такого товара нет в списке, пожалуйста, попробуйте снова.' . PHP_EOL;
         return;
     }
@@ -119,11 +125,13 @@ function operationDelete(array &$items): void {
     echo 'Введите название товара для удаления из списка:' . PHP_EOL . '> ';
     $itemName = trim(fgets(STDIN));
     $deleted = false;
-    while (($key = array_search($itemName, array_column($items, 'name'), true)) !== false) {
-        unset($items[$key]);
-        $deleted = true;
+    foreach ($items as $key => $item) {
+        if ($item['name'] === $itemName) {
+            unset($items[$key]);
+            $deleted = true;
+        }
     }
-    if ($deleted === true) {
+    if ($deleted) {
         echo "Товар удален. \n";
     } else {
         echo "Такого товара нет в списке, пожалуйста, попробуйте снова. \n";
